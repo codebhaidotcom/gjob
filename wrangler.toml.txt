@@ -1,0 +1,18 @@
+name = "gjob"
+compatibility_date = "2026-05-19"
+pages_build_output_dir = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gjob-db"
+database_id = "7fb499ed-8d00-4f6a-89ec-f9e9d09def77"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id"   # ← Replace after creating KV namespace
+
+[vars]
+SITE_URL = "https://gjob.pages.dev"   # ← Change to your custom domain later
+SITE_NAME = "GJob.in"
+ADMIN_KEY = "your-strong-admin-key"   # ← Change to a strong secret key
+JWT_SECRET = "your-jwt-secret"        # ← Change to a strong secret

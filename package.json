@@ -1,0 +1,9 @@
+{
+  "name": "gjob",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler pages dev ./public --d1=DB --kv=CACHE"
+  }
+}

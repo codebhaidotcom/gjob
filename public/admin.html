@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel – GJob.in</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #1e293b; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 15px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h1 { font-size: 24px; color: #0d47a1; margin-bottom: 15px; }
+        h2 { font-size: 20px; color: #333; margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin: 10px 0 5px; color: #444; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
+        textarea { min-height: 150px; resize: vertical; }
+        button { background: #1565c0; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; margin-right: 10px; }
+        button.danger { background: #d32f2f; }
+        button.success { background: #2e7d32; }
+        button:hover { opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e0e0e0; text-align: left; }
+        th { background: #f5f5f5; font-weight: 600; }
+        .actions { display: flex; gap: 8px; }
+        .badge { background: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .badge.published { background: #c8e6c9; color: #2e7d32; }
+        .badge.draft { background: #fff9c4; color: #f57f17; }
+        .success-msg { color: #2e7d32; background: #e8f5e9; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
+        .error-msg { color: #c62828; background: #ffebee; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
+        .hidden { display: none; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        @media (max-width: 600px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 GJob.in Admin Panel</h1>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="card">
+            <h2>Admin Login</h2>
+            <input type="password" id="adminKey" placeholder="Enter Admin Key">
+            <button onclick="login()">🔐 Login</button>
+            <div id="loginError" class="error-msg hidden"></div>
+        </div>
+
+        <!-- Dashboard (hidden until login) -->
+        <div id="dashboard" class="hidden">
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="margin:0;">📋 Manage Posts</h2>
+                <div>
+                    <button onclick="showAddForm()" class="success">+ Add New Post</button>
+                    <button onclick="logout()" class="danger">🚪 Logout</button>
+                </div>
+            </div>
+
+            <!-- Add/Edit Form -->
+            <div id="postForm" class="card hidden">
+                <h2 id="formTitle">Add New Post</h2>
+                <input type="hidden" id="postId">
+                
+                <label>Title *</label>
+                <input type="text" id="title" required>
+                
+                <label>Slug *</label>
+                <input type="text" id="slug" required>
+                
+                <label>Category</label>
+                <select id="category"></select>
+                
+                <label>Content</label>
+                <textarea id="content"></textarea>
+                
+                <label>Important Dates</label>
+                <textarea id="importantDates" rows="3" placeholder="• Start Date: 15/05/2026&#10;• Last Date: 15/06/2026&#10;• Exam Date: July 2026"></textarea>
+                
+                <label>Application Fee</label>
+                <input type="text" id="applicationFee" placeholder="General: ₹600 | SC/ST: ₹400">
+                
+                <label>Age Limit</label>
+                <input type="text" id="ageLimit" placeholder="18-35 Years">
+                
+                <label>Eligibility</label>
+                <textarea id="eligibility" rows="3" placeholder="Graduation from any recognized university..."></textarea>
+                
+                <label>Official Link</label>
+                <input type="url" id="officialLink" placeholder="https://example.com">
+                
+                <label>Apply Link</label>
+                <input type="url" id="applyLink" placeholder="https://example.com/apply">
+                
+                <div class="grid-3">
+                    <div><label>Last Date</label><input type="date" id="lastDate"></div>
+                    <div><label>Correction Last Date</label><input type="date" id="correctionLastDate"></div>
+                    <div><label>Exam Date</label><input type="date" id="examDate"></div>
+                </div>
+                
+                <label style="margin-top:10px;">
+                    <input type="checkbox" id="isTrending"> Mark as Trending 🔥
+                </label>
+                
+                <div style="margin-top:15px;">
+                    <button onclick="savePost()" class="success">💾 Publish</button>
+                    <button onclick="cancelForm()" class="danger">Cancel</button>
+                </div>
+                <div id="formMessage" class="hidden"></div>
+            </div>
+
+            <!-- Posts List -->
+            <div class="card">
+                <h2>All Posts <span id="postCount" style="font-size:14px;color:#666;"></span></h2>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Title</th><th>Category</th><th>Status</th><th>Views</th><th>Date</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="postsList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/admin';
+        let token = '';
+
+        // ========== AUTH ==========
+        async function login() {
+            const key = document.getElementById('adminKey').value;
+            if (!key) {
+                showError('loginError', 'Please enter admin key');
+                return;
+            }
+            const res = await fetch(`${API_BASE}/auth`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                token = data.token || key;
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadCategories();
+                loadPosts();
+            } else {
+                showError('loginError', data.error || 'Invalid admin key');
+            }
+        }
+
+        function logout() {
+            token = '';
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        function authHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        // ========== CATEGORIES ==========
+        async function loadCategories() {
+            const res = await fetch('/api/home');
+            const cats = await res.json();
+            const select = document.getElementById('category');
+            select.innerHTML = '';
+            cats.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // ========== POSTS CRUD ==========
+        async function loadPosts() {
+            const res = await fetch(`${API_BASE}/posts`, { headers: authHeaders() });
+            const data = await res.json();
+            const tbody = document.getElementById('postsList');
+            document.getElementById('postCount').textContent = `(${data.posts?.length || 0} posts)`;
+            tbody.innerHTML = '';
+            if (data.posts) {
+                data.posts.forEach(post => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${post.id}</td>
+                        <td><strong>${escapeHTML(post.title?.substring(0, 50) || '')}...</strong></td>
+                        <td>${post.category_id || '-'}</td>
+                        <td><span class="badge ${post.status}">${post.status}</span></td>
+                        <td>${post.views || 0}</td>
+                        <td>${new Date(post.created_at).toLocaleDateString('en-IN')}</td>
+                        <td class="actions">
+                            <button onclick="editPost(${post.id})">✏️ Edit</button>
+                            <button onclick="deletePost(${post.id})" class="danger">🗑️ Delete</button>
+                        </td>
+                    `;
+                });
+            }
+        }
+
+        function showAddForm() {
+            document.getElementById('postForm').classList.remove('hidden');
+            document.getElementById('formTitle').textContent = 'Add New Post';
+            document.getElementById('postId').value = '';
+            document.getElementById('title').value = '';
+            document.getElementById('slug').value = '';
+            document.getElementById('content').value = '';
+            document.getElementById('importantDates').value = '';
+            document.getElementById('applicationFee').value = '';
+            document.getElementById('ageLimit').value = '';
+            document.getElementById('eligibility').value = '';
+            document.getElementById('officialLink').value = '';
+            document.getElementById('applyLink').value = '';
+            document.getElementById('lastDate').value = '';
+            document.getElementById('correctionLastDate').value = '';
+            document.getElementById('examDate').value = '';
+            document.getElementById('isTrending').checked = false;
+        }
+
+        function cancelForm() {
+            document.getElementById('postForm').classList.add('hidden');
+        }
+
+        async function savePost() {
+            const id = document.getElementById('postId').value;
+            const method = id ? 'PUT' : 'POST';
+            const endpoint = id ? `${API_BASE}/posts?id=${id}` : `${API_BASE}/posts`;
+
+            const body = {
+                title: document.getElementById('title').value,
+                slug: document.getElementById('slug').value,
+                category_id: parseInt(document.getElementById('category').value),
+                content: document.getElementById('content').value,
+                important_dates: document.getElementById('importantDates').value,
+                application_fee: document.getElementById('applicationFee').value,
+                age_limit: document.getElementById('ageLimit').value,
+                eligibility: document.getElementById('eligibility').value,
+                official_link: document.getElementById('officialLink').value,
+                apply_link: document.getElementById('applyLink').value,
+                last_date: document.getElementById('lastDate').value || null,
+                correction_last_date: document.getElementById('correctionLastDate').value || null,
+                exam_date: document.getElementById('examDate').value || null,
+                is_trending: document.getElementById('isTrending').checked ? 1 : 0
+            };
+
+            const res = await fetch(endpoint, {
+                method,
+                headers: authHeaders(),
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                cancelForm();
+                loadPosts();
+                showFormMessage('success-msg', '✅ Post saved successfully!');
+            } else {
+                const err = await res.json();
+                showFormMessage('error-msg', '❌ ' + (err.error || 'Failed to save'));
+            }
+        }
+
+        async function editPost(id) {
+            const res = await fetch(`${API_BASE}/posts?id=${id}`, { headers: authHeaders() });
+            const data = await res.json();
+            const post = data.post;
+            if (!post) return;
+            
+            document.getElementById('postForm').classList.remove('hidden');
+            document.getElementById('formTitle').textContent = 'Edit Post #' + post.id;
+            document.getElementById('postId').value = post.id;
+            document.getElementById('title').value = post.title || '';
+            document.getElementById('slug').value = post.slug || '';
+            document.getElementById('category').value = post.category_id || '';
+            document.getElementById('content').value = post.content || '';
+            document.getElementById('importantDates').value = post.important_dates || '';
+            document.getElementById('applicationFee').value = post.application_fee || '';
+            document.getElementById('ageLimit').value = post.age_limit || '';
+            document.getElementById('eligibility').value = post.eligibility || '';
+            document.getElementById('officialLink').value = post.official_link || '';
+            document.getElementById('applyLink').value = post.apply_link || '';
+            document.getElementById('lastDate').value = post.last_date || '';
+            document.getElementById('correctionLastDate').value = post.correction_last_date || '';
+            document.getElementById('examDate').value = post.exam_date || '';
+            document.getElementById('isTrending').checked = post.is_trending == 1;
+        }
+
+        async function deletePost(id) {
+            if (!confirm('Are you sure you want to delete this post? This cannot be undone!')) return;
+            const res = await fetch(`${API_BASE}/posts?id=${id}`, {
+                method: 'DELETE',
+                headers: authHeaders()
+            });
+            if (res.ok) {
+                loadPosts();
+                showFormMessage('success-msg', '✅ Post deleted successfully!');
+            }
+        }
+
+        function showError(elementId, msg) {
+            const el = document.getElementById(elementId);
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        function showFormMessage(type, msg) {
+            const el = document.getElementById('formMessage');
+            el.textContent = msg;
+            el.className = type;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        function escapeHTML(str) {
+            return str?.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch]) || '';
+        }
+    </script>
+</body>
+</html>
